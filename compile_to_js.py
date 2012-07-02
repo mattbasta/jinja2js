@@ -20,6 +20,15 @@ from jinja2.parser import Parser
 from jinja2.visitor import NodeVisitor
 
 
+def accessor(key):
+    idx = key.find('(')
+    call = ''
+    if idx:
+        call = key[idx:]
+        key = key[:idx]
+    return "']['".join(key.split('.')) + call
+
+
 class JSVisitor(NodeVisitor):
 
     def __init__(self, attributes=False):
@@ -58,9 +67,9 @@ class JSVisitor(NodeVisitor):
             self.paramming = True
             self.start_wrapper(wrap=False)
             self.write("param['")
-            self.write(self.visit(node))
+            self.write(accessor(self.visit(node)))
             if self.attributes:
-                print self.visit(node)
+                print accessor(self.visit(node))
             self.write("']")
             self.paramming = False
 
