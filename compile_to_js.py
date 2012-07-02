@@ -1,4 +1,16 @@
+"""
+Jinja2JS
+
+Usage:
+  compile_to_js.py <template> [--attributes]
+
+Options:
+  --attributes      This flag will print all the JSON fields that are used by
+                    the template.
+"""
+
 from cStringIO import StringIO
+from docopt import docopt
 import json
 
 from jinja2.environment import Environment
@@ -8,22 +20,13 @@ from jinja2.parser import Parser
 from jinja2.visitor import NodeVisitor
 
 
-def parse(data):
-    e = Environment()
-    e.add_extension("jinja2.ext.i18n")
-    return e.parse(data)
-
-# Read the template for shits and giggles.
-with open("/opt/zamboni/mkt/detail/templates/detail/app.html") as fd:
-    data = fd.read()
-    ast = parse(data)
-
 
 class JSVisitor(NodeVisitor):
 
-    def __init__(self):
+    def __init__(self, attributes=False):
         self.extends = None
         self.paramming = False
+        self.attributes = attributes
 
         self.wrappers = []
 
@@ -57,12 +60,12 @@ class JSVisitor(NodeVisitor):
             self.start_wrapper(wrap=False)
             self.write("param['")
             self.write(self.visit(node))
-            #print self.wrappers[-1].getvalue()
+            if self.attributes:
+                print self.visit(node)
             self.write("']")
             self.paramming = False
 
             output = self.end_wrapper(wrap=False)
-            print output
             return output
         else:
             return self.visit(node)
@@ -77,7 +80,7 @@ class JSVisitor(NodeVisitor):
                 self.write(value)
 
         block = self.wrappers.pop()
-        return " +\n ".join(block)
+        return " + ".join(block)
 
     def run(self, body):
         blocks = {}
@@ -276,6 +279,20 @@ class JSVisitor(NodeVisitor):
     def visit_Block(self, node):
         return self.block_visit(node.body)
 
-tr = JSVisitor()
-tr.run(ast.body)
+
+if __name__ == "__main__":
+    arguments = docopt(__doc__, version="Jinja2JS 0.1")
+
+    def parse(data):
+        e = Environment()
+        e.add_extension("jinja2.ext.i18n")
+        return e.parse(data)
+
+    with open(arguments["<template>"]) as fd:
+        ast = parse(fd.read())
+
+    tr = JSVisitor(attributes=arguments["--attributes"])
+    output = tr.run(ast.body)
+    if not arguments["--attributes"]:
+        print output
 
