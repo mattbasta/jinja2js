@@ -20,7 +20,6 @@ from jinja2.parser import Parser
 from jinja2.visitor import NodeVisitor
 
 
-
 class JSVisitor(NodeVisitor):
 
     def __init__(self, attributes=False):
