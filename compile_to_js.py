@@ -93,7 +93,7 @@ class JSVisitor(NodeVisitor):
             output.append(self.visit(node))
 
         if output:
-            blocks["__default__"] = "return " + " + ".join(output)
+            blocks["__default__"] = " + ".join(output)
 
         output = StringIO()
         output.write("function template(param) {return {")
@@ -102,9 +102,9 @@ class JSVisitor(NodeVisitor):
             if not first:
                 output.write(", ")
             output.write(block)
-            output.write(": function() {")
+            output.write(": function() {return ")
             output.write(generator)
-            output.write("}")
+            output.write(";}")
             first = False
 
         output.write("};}")
