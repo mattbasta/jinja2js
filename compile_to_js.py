@@ -243,10 +243,10 @@ class JSVisitor(NodeVisitor):
         return "'%s'" % data
 
     def visit_And(self, node):
-        return self.visit(node.left) + " && " + self.visit(node.right)
+        return "(%s && %s)" % (self.visit(node.left), self.visit(node.right))
 
     def visit_Or(self, node):
-        return self.visit(node.left) + " || " + self.visit(node.right)
+        return "(%s || %s)" % (self.visit(node.left), self.visit(node.right))
 
     def visit_Not(self, node):
         return "!(" + self.visit(node.node) + ")"
@@ -284,6 +284,51 @@ class JSVisitor(NodeVisitor):
 
     def visit_Block(self, node):
         return self.block_visit(node.body)
+
+    def visit_ExprStmt(self, node):
+        return self.visit(node.node)
+
+    def visit_FloorDiv(self, node):
+        return "Math.floor(%s / %s)" % (self.visit(node.left),
+                                        self.visit(node.right))
+
+    def visit_Pow(self, node):
+        return "Math.pow(%s, %s)" % (self.visit(node.left),
+                                     self.visit(node.right))
+
+    def binop(operator):
+        def visitor(self, node):
+            return "(%s %s %s)" % (self.visit(node.left),
+                                   operator,
+                                   self.visit(node.right))
+        return visitor
+
+    def uop(operator):
+        def visitor(self, node):
+            return "(%s %s)" % (operator, self.visit(node.node))
+        return visitor
+
+    visit_Add = binop("+")
+    visit_Sub = binop("-")
+    visit_Mul = binop("*")
+    visit_Div = binop("/")
+    visit_Mod = binop("%")
+
+    visit_Pos = uop("+")
+    visit_Neg = uop("-")
+    del binop, uop
+
+    def visit_Concat(self, node):
+        return " + ".join(self.visit(node) for node in node.nodes)
+
+    def visit_Slice(self, node):
+        if node.step:
+            raise Exception("Slice steps are not supported.")
+        params = []
+        params.append(node.start if node.start else 0)
+        if node.end:
+            params.append(node.end)
+        return ".slice(%s)" % ", ".join(params)
 
 
 if __name__ == "__main__":
