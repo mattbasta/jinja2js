@@ -190,6 +190,13 @@ class JSVisitor(NodeVisitor):
                           node.attr if isinstance(node.attr, str) else
                               self.safe_visit(node.attr))
 
+    def visit_Getitem(self, node):
+        if not self.paramming:
+            return self.safe_visit(node)
+
+        subscript = self.visit(node.arg)
+        return "%s[%s]" % (self.visit(node.node), subscript)
+
     def visit_Const(self, node):
         if node.value is None:
             return "null"
