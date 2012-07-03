@@ -134,6 +134,8 @@ class JSVisitor(NodeVisitor):
             self.write("else{return ")
             self.write(self.block_visit(node.else_))
             self.write(";}")
+        else:
+            self.write("else{return '';}")
 
         return self.end_wrapper()
 
@@ -329,6 +331,9 @@ class JSVisitor(NodeVisitor):
 
     def visit_Concat(self, node):
         return " + ".join(self.visit(node) for node in node.nodes)
+
+    def visit_Filter(self, node):
+        return "filter(%s, '%s')" % (self.visit(node.node), node.name)
 
     def visit_Slice(self, node):
         if node.step:
