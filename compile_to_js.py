@@ -134,6 +134,8 @@ class JSVisitor(NodeVisitor):
             self.write("else{return ")
             self.write(self.block_visit(node.else_))
             self.write(";}")
+        else:
+            self.write("else{return '';}")
 
         return self.end_wrapper()
 
