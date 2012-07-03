@@ -332,6 +332,9 @@ class JSVisitor(NodeVisitor):
     def visit_Concat(self, node):
         return " + ".join(self.visit(node) for node in node.nodes)
 
+    def visit_Filter(self, node):
+        return "filter(%s, '%s')" % (self.visit(node.node), node.name)
+
     def visit_Slice(self, node):
         if node.step:
             raise Exception("Slice steps are not supported.")
