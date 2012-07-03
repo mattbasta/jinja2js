@@ -212,7 +212,9 @@ class JSVisitor(NodeVisitor):
         if node.value is None:
             return "null"
 
-        if isinstance(node.value, (int, float, long, bool)):
+        if isinstance(node.value, bool):
+            return str(node.value).lower()
+        if isinstance(node.value, (int, float, long)):
             return str(node.value)
 
         output = StringIO()
