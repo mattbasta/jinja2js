@@ -27,8 +27,8 @@ supported:
 - ``for`` loops
 - Macros
 - Call blocks
-- Inline ``dict``s, ``tuple``s, and ``list``s.
-- Some slice features (step)
+- Client-side inline `dict`s, `tuple`s, and `list`s.
+- Slice steps in client side code.
 - Tests
 
 Considerations

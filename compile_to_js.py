@@ -15,10 +15,11 @@ import json
 
 from jinja2.environment import Environment
 from jinja2.nodes import Block as BlockNode, Name as NameNode, \
-                         Output as OutputNode
+                         Output as OutputNode, Slice as SliceNode
 from jinja2.parser import Parser
 from jinja2.visitor import NodeVisitor
 
+from jinja2js.constprepare import prepare_const
 
 def accessor(key):
     idx = key.find('(')
@@ -205,6 +206,8 @@ class JSVisitor(NodeVisitor):
         if not self.paramming:
             return self.safe_visit(node)
 
+        if isinstance(node.arg, SliceNode):
+            return self.visit(node.node) + self.visit(node.arg)
         subscript = self.visit(node.arg)
         return "%s[%s]" % (self.visit(node.node), subscript)
 
@@ -222,11 +225,7 @@ class JSVisitor(NodeVisitor):
             output.write("\\")
         output.write("'")
 
-        value = node.value.replace("\n", "\\n")
-        value = value.replace("\t", "\\t")
-        value = value.replace("\r", "\\r")
-        value = value.replace("'", "\\'")
-        output.write(value)
+        output.write(prepare_const(node.value))
 
         if self.paramming:
             output.write("\\")
@@ -338,6 +337,17 @@ class JSVisitor(NodeVisitor):
         return "filter(%s, '%s')" % (self.visit(node.node), node.name)
 
     def visit_Slice(self, node):
+        if self.paramming:
+            slice = [node.start if node.start else ""]
+            if node.end:
+                slice.append(node.end)
+            elif node.step:
+                slice.append("")
+
+            if node.step:
+                slice.append(node.step)
+            return "[%s]" % ":".join(slice)
+
         if node.step:
             raise Exception("Slice steps are not supported.")
         params = []
