@@ -1,3 +1,4 @@
+from itertools import chain
 from StringIO import StringIO
 
 from jinja2.compiler import CodeGenerator, CompilerExit, Frame
@@ -49,23 +50,19 @@ class JSONVisitor(CodeGenerator):
 
         self.writeline("def root(context, environment):", extra=1)
         self.indent()
+        #self.writeline("request = environment.request")
+
+        body = node.body
+        for block in node.find_all(nodes.Block):
+            body += block.body
 
         frame = Frame(eval_ctx)
-        frame.inspect(node.body)
+        frame.inspect(body)
         frame.toplevel = frame.rootlevel = True
 
         self.pull_locals(frame)
-        # self.pull_dependencies(node.body)
+        self.pull_dependencies(body)
         self.blockvisit(node.body, frame)
-
-        for name, block in self.blocks.iteritems():
-            block_frame = Frame(eval_ctx)
-            block_frame.inspect(block.body)
-            block_frame.block = name
-
-            self.pull_locals(block_frame)
-            # self.pull_dependencies(block.body)
-            self.blockvisit(block.body, Frame(None))
 
         self.outdent()
 

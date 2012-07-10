@@ -51,7 +51,6 @@ def extract_template(request, template, context=None):
     compiler = JSONVisitor(env, name=None, filename=filename)
     compiler.visit(ast)
     gen_python = compiler.stream.getvalue()
-    #print generator
 
     compiled = compile(gen_python, filename, "exec")
     namespace = {}

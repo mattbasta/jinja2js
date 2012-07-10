@@ -26,15 +26,36 @@ class TestJSON(object):
 
         self.env.add_extension("jinja2.ext.i18n")
 
-    def test_json(self):
+        self.request = MockRequest()
         jinja2js.set_env(self.env)
-        request = MockRequest()
 
+    def test_name(self):
+        ctx = {"foo": "abc"}
+        data = jinja2js.extract_template(self.request, "name.html", ctx)
+        print data
+        assert data["foo"] == "abc"
+
+    def test_getitem(self):
+        ctx = {"foo": {"bar": "basta"}}
+        data = jinja2js.extract_template(self.request, "getitem.html", ctx)
+        print data
+        assert data["foo['bar']"] == "basta"
+
+    def test_getattr(self):
+        self.request.GET["foo"] = "bar"
+        ctx = {}
+        data = jinja2js.extract_template(self.request, "getattr.html", ctx)
+        print data
+        assert data["request.GET['foo']"] == "bar"
+
+    def test_condexpr(self):
         ctx = {
             "foo": "abc",
             "bar": 1,
             "zap": 123,
         }
 
-        data = jinja2js.extract_template(request, "app.html", ctx)
+        data = jinja2js.extract_template(self.request, "condexpr.html", ctx)
+        print data
         assert data["fooifbarelsezap"] == "abc"
+
