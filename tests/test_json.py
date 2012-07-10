@@ -29,5 +29,12 @@ class TestJSON(object):
     def test_json(self):
         jinja2js.set_env(self.env)
         request = MockRequest()
-        data = jinja2js.extract_template(request, "app.html")
-        print data
+
+        ctx = {
+            "foo": "abc",
+            "bar": 1,
+            "zap": 123,
+        }
+
+        data = jinja2js.extract_template(request, "app.html", ctx)
+        assert data["fooifbarelsezap"] == "abc"

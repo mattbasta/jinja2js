@@ -57,9 +57,9 @@ def extract_template(request, template, context=None):
     namespace = {}
     exec compiled in namespace
 
-    context = new_context(env, None, blocks={}, vars=None)
-    namespace["root"](context, env)
-    return context.vars
+    jinj_context = new_context(env, None, blocks={}, vars=context)
+    namespace["root"](jinj_context, env)
+    return jinj_context.vars
 
 
 def extract(request, template, context=None, **kwargs):
