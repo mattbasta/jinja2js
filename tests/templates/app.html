@@ -1,0 +1,9 @@
+{% extends 'detail/protected_app.html' %}
+
+{% set fooifbarelsezap = foo if bar else zap %}
+
+{% block content %}
+<div>
+  <h1>{{ foo['bar'] }}</h1>
+</div>
+{% endblock %}

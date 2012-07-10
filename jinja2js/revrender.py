@@ -1,6 +1,7 @@
 import json
 
 import jinja2.environment
+from jinja2.runtime import new_context
 
 from jsonextractor import JSONVisitor
 
@@ -15,6 +16,7 @@ except ImportError:
     pass
 
 def set_env(environment):
+    global env
     env = environment
 
 
@@ -45,10 +47,19 @@ def extract_template(request, template, context=None):
 
     source, filename, uptodate = env.loader.get_source(env, template)
 
-    ast = env._parse(source, filename=filename)
+    ast = env._parse(source, name=None, filename=filename)
     compiler = JSONVisitor(env, name=None, filename=filename)
-    generator = compiler.visit(ast).stream.getvalue()
-    print generator
+    compiler.visit(ast)
+    gen_python = compiler.stream.getvalue()
+    #print generator
+
+    compiled = compile(gen_python, filename, "exec")
+    namespace = {}
+    exec compiled in namespace
+
+    context = new_context(env, None, blocks={}, vars=None)
+    namespace["root"](context, env)
+    return context.vars
 
 
 def extract(request, template, context=None, **kwargs):
