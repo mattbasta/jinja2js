@@ -180,6 +180,7 @@ class JSONVisitor(CodeGenerator):
         self.write(":")
 
         self.indent()
+        self.writeline("pass")
         self.blockvisit(node.body, if_frame)
         self.outdent()
 
@@ -187,6 +188,7 @@ class JSONVisitor(CodeGenerator):
             self.writeline("else:")
 
             self.indent()
+            self.writeline("pass")
             self.blockvisit(node.else_, if_frame)
             self.outdent()
 
