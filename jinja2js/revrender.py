@@ -11,7 +11,7 @@ env = None
 
 try:
     import jingo
-    env = jingo.get_env()
+    env = jingo.env
 except ImportError:
     pass
 
