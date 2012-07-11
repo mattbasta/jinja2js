@@ -103,7 +103,7 @@ class JSONVisitor(CodeGenerator):
         # added to look out for Tuple objects and deal with them appropriately.
 
         self.assigning = True
-        self.write("context.vars['")
+        self.writeline("context.vars['")
         self.paramming = True
         if isinstance(target, str):
             self.write(target.replace("'", "\\'"))
@@ -170,4 +170,23 @@ class JSONVisitor(CodeGenerator):
 
     def visit_TemplateData(self, node, frame):
         pass
+
+    def visit_If(self, node, frame):
+        if_frame = frame.soft()
+        self.writeline("if ", node)
+        self.assigning = True
+        self.visit(node.test, if_frame)
+        self.assigning = False
+        self.write(":")
+
+        self.indent()
+        self.blockvisit(node.body, if_frame)
+        self.outdent()
+
+        if node.else_:
+            self.writeline("else:")
+
+            self.indent()
+            self.blockvisit(node.else_, if_frame)
+            self.outdent()
 
