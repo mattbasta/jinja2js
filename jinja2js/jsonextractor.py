@@ -190,3 +190,19 @@ class JSONVisitor(CodeGenerator):
             self.blockvisit(node.else_, if_frame)
             self.outdent()
 
+    def visit_Filter(self, node, frame):
+        if not self.assigning:
+            return self.visit_as_assignment(node, frame, target=node)
+
+        if self.paramming:
+            self.visit(node.node, frame)
+            self.write("|")
+            self.write(node.name)
+            if node.args or node.kwargs or node.dyn_args or node.dyn_kwargs:
+                self.write("(")
+                self.signature(node, frame)
+                self.write(")")
+            return
+
+        super(JSONVisitor, self).visit_Filter(node, frame)
+
