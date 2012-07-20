@@ -17,11 +17,14 @@ from jinja2.environment import Environment
 from jinja2.nodes import Block as BlockNode, Name as NameNode, \
                          Output as OutputNode, Slice as SliceNode
 from jinja2.parser import Parser
+from jinja2.utils import is_python_keyword
 from jinja2.visitor import NodeVisitor
 
 from jinja2js.constprepare import prepare_const
 
 def accessor(key):
+    return key
+    # We're going to ignore the rest of this for now.
     idx = key.find('(')
     call = ''
     if idx:
@@ -127,7 +130,7 @@ class JSVisitor(NodeVisitor):
     def visit_If(self, node):
         self.start_wrapper()
         self.write("if(")
-        self.write(self.visit(node.test))
+        self.write(self.safe_visit(node.test))
         self.write(") {return ")
         self.write(self.block_visit(node.body))
         self.write(";}")
@@ -164,21 +167,7 @@ class JSVisitor(NodeVisitor):
         output = StringIO()
         output.write(self.safe_visit(node.node))
         output.write("(")
-        if node.args:
-            first = True
-            for arg in node.args:
-                if not first:
-                    output.write(", ")
-                output.write(self.visit(arg))
-                first = False
-
-        if node.kwargs:
-            first = True
-            for kwarg in node.kwargs:
-                if not first or node.args:
-                    output.write(", ")
-                output.write(self.safe_visit(kwarg))
-                first = False
+        output.write(self.signature(node))
         output.write(")")
         return output.getvalue()
 
@@ -255,12 +244,18 @@ class JSVisitor(NodeVisitor):
         return "'%s'" % data
 
     def visit_And(self, node):
-        return "(%s && %s)" % (self.visit(node.left), self.visit(node.right))
+        op = "and" if self.paramming else "&&"
+        return "(%s %s %s)" % (self.visit(node.left), op,
+                               self.visit(node.right))
 
     def visit_Or(self, node):
-        return "(%s || %s)" % (self.visit(node.left), self.visit(node.right))
+        op = "or" if self.paramming else "||"
+        return "(%s %s %s)" % (self.visit(node.left), op,
+                               self.visit(node.right))
 
     def visit_Not(self, node):
+        if self.paramming:
+            return "(not %s)" % self.visit(node.node)
         return "!(" + self.visit(node.node) + ")"
 
     def visit_Compare(self, node):
@@ -284,12 +279,7 @@ class JSVisitor(NodeVisitor):
         return " %s %s" % (node.op, self.visit(node.expr))
 
     def visit_Assign(self, node):
-        self.start_wrapper()
-        self.write(self.safe_visit(node.target))
-        self.write(" = ")
-        self.write(self.visit(node.node))
-        self.write("; return '';")
-        return self.end_wrapper()
+        return None
 
     def visit_Output(self, node):
         return self.block_visit(node.nodes)
@@ -334,7 +324,10 @@ class JSVisitor(NodeVisitor):
         return " + ".join(self.visit(node) for node in node.nodes)
 
     def visit_Filter(self, node):
-        return "filter(%s, '%s')" % (self.visit(node.node), node.name)
+        if not self.paramming:
+            return self.safe_visit(node)
+
+        return "%s|%s" % (self.visit(node.node), node.name)
 
     def visit_Slice(self, node):
         if self.paramming:
@@ -355,6 +348,60 @@ class JSVisitor(NodeVisitor):
         if node.end:
             params.append(node.end)
         return ".slice(%s)" % ", ".join(params)
+
+    def signature(self, node, frame=None):
+        # This function was borrowed from jinja2.compiler.Compiler.signature.
+        kwarg_workaround = any(map(is_python_keyword,
+                                   (x.key for x in node.kwargs)))
+
+        output = StringIO()
+
+        for arg in node.args:
+            output.write(', ')
+            output.write(self.visit(arg))
+
+        if not kwarg_workaround:
+            for kwarg in node.kwargs:
+                output.write(', ')
+                output.write(self.visit(kwarg))
+        if node.dyn_args:
+            output.write(', *')
+            output.write(self.visit(node.dyn_args))
+
+        if kwarg_workaround:
+            if node.dyn_kwargs is not None:
+                output.write(', **dict({')
+            else:
+                output.write(', **{')
+            for kwarg in node.kwargs:
+                output.write('%r: ' % kwarg.key)
+                output.write(self.visit(kwarg.value))
+                output.write(', ')
+            if node.dyn_kwargs is not None:
+                output.write('}, **')
+                output.write(self.visit(node.dyn_kwargs))
+                output.write(')')
+            else:
+                output.write('}')
+
+        elif node.dyn_kwargs is not None:
+            output.write(', **')
+            output.write(self.visit(node.dyn_kwargs))
+
+        return output.getvalue()
+
+    def visit_Tuple(self, node):
+        if not node.items:
+            return "(, )"
+        return "(%s)" % ", ".join(map(self.visit, node.items))
+
+    def visit_List(self, node):
+        return "[%s]" % ", ".join(map(self.visit, node.items))
+
+    def visit_Dict(self, node):
+        return "{%s}" % ", ".join("%s: %s" % (self.visit(node.key),
+                                              self.visit(node.value)) for
+                                  node in node.items)
 
 
 if __name__ == "__main__":

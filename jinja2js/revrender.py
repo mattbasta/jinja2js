@@ -30,7 +30,7 @@ def extract_template(request, template, context=None):
         c = {} if context is None else context.copy()
 
         try:
-            from django.tempalte.context import get_standard_processors
+            from django.template.context import get_standard_processors
             for processor in get_standard_processors():
                 c.update(processor(request))
         except ImportError:
@@ -56,10 +56,22 @@ def extract_template(request, template, context=None):
     namespace = {}
     exec compiled in namespace
 
-    jinj_context = new_context(env, None, blocks={}, vars=context)
+    jinj_context = new_context(env, None, blocks={}, vars=get_context(),
+                               globals=env.globals)
     namespace["root"](jinj_context, env)
-    return jinj_context.vars
+    vars = jinj_context.vars
+    output = {}
+    for key, var in vars.items():
+        if not isinstance(var, (int, float, long, str, unicode, bool)):
+            var = bool(var)
+        output[key] = var
+    return output
 
+
+try:
+    from django import http
+except ImportError:
+    http = None
 
 def extract(request, template, context=None, **kwargs):
     extracted = extract_template(request, template, context)
