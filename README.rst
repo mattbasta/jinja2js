@@ -36,8 +36,3 @@ Considerations
 
 - Content that it output outside of a block is placed in the ``__default__``
   block.
-- Filters are wrapped in the ``j2filter("node", "filter_name")`` function.
-  Evaluating ``"node"`` as its corresponding object in the context and applying
-  the filter ``environment.filters.get("filter_name")`` will yield the expected
-  result.
-
