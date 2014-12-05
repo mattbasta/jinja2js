@@ -9,15 +9,17 @@ the future. Consider using Mozilla's
 Usage
 -----
 
-    python compile_to_js.py <path to jinja2 template>
+```bash
+python compile_to_js.py /path/to/jinja2/template
+```
 
 The above command will yield a JavaScript function which, when executed with a
 JSON blob containing values that correspond to the values requested by the
 template as the first argument, will yield a rendered version of the template.
 
-Adding the ``--attributes`` flag to the command will return a list of values
+Adding the `--attributes` flag to the command will return a list of values
 which the template expects to be provided in the JSON. This list may be more
-useful if piped through ``| sort | uniq``.
+useful if piped through `| sort | uniq`.
 
 Unsupported Jinja Features
 --------------------------
@@ -29,7 +31,7 @@ supported:
 - Imports
 - Includes
 - Filters and filter blocks
-- ``for`` loops
+- `for` loops
 - Macros
 - Call blocks
 - Client-side inline `dict`s, `tuple`s, and `list`s.
@@ -39,5 +41,5 @@ supported:
 Considerations
 --------------
 
-- Content that it output outside of a block is placed in the ``__default__``
+- Content that it output outside of a block is placed in the `__default__`
   block.
