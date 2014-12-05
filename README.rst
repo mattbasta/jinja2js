@@ -1,6 +1,11 @@
 Jinja2JS
 ========
 
+**WARNING!** This project is completely unmaintained. Contributions will still
+be accepted, but it is unlikely that this project will be developed actively in
+the future. Consider using Mozilla's
+[Nunjucks](https://github.com/mozilla/nunjucks) instead.
+
 Usage
 -----
 
